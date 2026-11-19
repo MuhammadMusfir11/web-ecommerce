@@ -1,11 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper: #f7f6f3;
-  --color-ink: #0f1115;
-  --color-card: #eeede9;
-  --color-accent: #ff5a1f;
-  --color-accent-dark: #e04a12;
+  /* Netral */
+  --color-paper: #f4f7fc;
+  --color-ink: #0f1b33;
+  --color-card: #eaf0f9;
+
+  /* Biru utama */
+  --color-accent: #2563eb;
+  --color-accent-dark: #1d4ed8;
+  --color-accent-soft: #e6eefe;
+
+  /* Label diskon dan latar kartu promo */
+  --color-sale: #e5484d;
+  --color-blush: #fdecec;
+  --color-sage: #e9f2ea;
+  --color-sand: #fbf0e4;
 
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Sora", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
@@ -19,6 +29,13 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
+}
+
+/* Ruang untuk bottom navigation di HP */
+@media (max-width: 1023px) {
+  body {
+    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 :focus-visible {

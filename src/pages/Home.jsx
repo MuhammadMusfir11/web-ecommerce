@@ -1,122 +1,202 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
   Smartphone,
   Laptop as LaptopIcon,
   Headphones,
   Plug,
-  ArrowUpRight,
+  LayoutGrid,
+  ShieldCheck,
+  RotateCcw,
+  Headset,
+  BadgeCheck,
 } from "lucide-react";
 import Hero from "../components/Hero";
 import ProductCard from "../components/ProductCard";
-import { categories, products } from "../data/products";
+import { categories, products, formatRupiah } from "../data/products";
 
-const icons = {
-  HP: Smartphone,
-  Laptop: LaptopIcon,
-  Audio: Headphones,
-  Aksesori: Plug,
+// Ikon dan warna per kategori
+const categoryStyle = {
+  HP: { icon: Smartphone, tone: "bg-accent-soft text-accent" },
+  Laptop: { icon: LaptopIcon, tone: "bg-sage text-emerald-700" },
+  Audio: { icon: Headphones, tone: "bg-blush text-rose-600" },
+  Aksesori: { icon: Plug, tone: "bg-sand text-amber-700" },
 };
 
-// Muncul pelan saat section masuk layar (sekali saja)
-const reveal = {
-  initial: { opacity: 0, y: 24 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-80px" },
-  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
-};
+// Teks bar kepercayaan: ubah sesuai kebijakan toko yang sebenarnya
+const trust = [
+  { icon: ShieldCheck, title: "Pembayaran aman", note: "Data transaksi terlindungi" },
+  { icon: RotateCcw, title: "Garansi produk", note: "Sesuai ketentuan toko" },
+  { icon: Headset, title: "Bantuan pelanggan", note: "Tanya stok dan spesifikasi" },
+  { icon: BadgeCheck, title: "Produk asli", note: "Harga tertera jelas" },
+];
+
+const discountOf = (p) => Math.round((1 - p.price / p.oldPrice) * 100);
+
+function SectionHeader({ title, to }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <h2 className="font-display text-xl font-bold tracking-tight sm:text-2xl">{title}</h2>
+      {to && (
+        <Link
+          to={to}
+          className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-accent shadow-sm ring-1 ring-ink/5 transition hover:bg-accent-soft"
+        >
+          Lihat semua
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function PromoCard({ title, note, to, tone, product }) {
+  return (
+    <Link
+      to={to}
+      className={`flex min-h-32 w-[78%] shrink-0 snap-start items-center justify-between gap-2 overflow-hidden rounded-2xl p-4 sm:w-[46%] lg:w-auto ${tone}`}
+    >
+      <div className="min-w-0">
+        <h3 className="font-display text-base font-bold">{title}</h3>
+        <p className="mt-1 text-sm text-ink/70">{note}</p>
+        <span className="mt-3 inline-block text-sm font-semibold text-accent">Lihat sekarang</span>
+      </div>
+      {product && (
+        <img
+          src={product.image}
+          alt=""
+          loading="lazy"
+          onError={(e) => (e.currentTarget.style.display = "none")}
+          className="h-24 w-24 shrink-0 object-contain mix-blend-multiply"
+        />
+      )}
+    </Link>
+  );
+}
 
 export default function Home({ onAddToCart }) {
-  const featured = products.filter((p) => p.featured);
-  const promo = products.filter((p) => p.oldPrice).slice(0, 2);
+  const deals = products.filter((p) => p.oldPrice);
+  const dealIds = new Set(deals.map((p) => p.id));
+  const recommended = [
+    ...products.filter((p) => p.featured),
+    ...products.filter((p) => !p.featured),
+  ]
+    .filter((p) => !dealIds.has(p.id))
+    .slice(0, 8);
+
+  const pick = (cat) =>
+    products.find((p) => p.category === cat && p.featured) ?? products.find((p) => p.category === cat);
+  const cheapest = (cat) => Math.min(...products.filter((p) => p.category === cat).map((p) => p.price));
+
+  const promoCards = [
+    deals.length > 0 && {
+      title: "Promo",
+      note: `Diskon hingga ${Math.max(...deals.map(discountOf))}%`,
+      to: "/products?promo=1",
+      tone: "bg-blush",
+      product: deals[0],
+    },
+    {
+      title: "Laptop",
+      note: `Mulai ${formatRupiah(cheapest("Laptop"))}`,
+      to: "/products?kategori=Laptop",
+      tone: "bg-sage",
+      product: pick("Laptop"),
+    },
+    {
+      title: "Audio",
+      note: `Mulai ${formatRupiah(cheapest("Audio"))}`,
+      to: "/products?kategori=Audio",
+      tone: "bg-sand",
+      product: pick("Audio"),
+    },
+  ].filter(Boolean);
 
   return (
     <>
       <Hero onAddToCart={onAddToCart} />
 
-      {/* Kategori */}
-      <motion.section {...reveal} className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-          Belanja per kategori
-        </h2>
-
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-          {categories.map((c) => {
-            const Icon = icons[c];
-            const total = products.filter((p) => p.category === c).length;
-            return (
-              <Link
-                key={c}
-                to={`/products?kategori=${c}`}
-                className="group relative flex h-40 flex-col justify-between overflow-hidden rounded-3xl bg-card p-5 transition-colors duration-300 hover:bg-accent hover:text-white sm:h-52 sm:p-6"
-              >
-                <div className="flex items-start justify-between">
-                  <Icon size={30} strokeWidth={1.6} />
-                  <ArrowUpRight
-                    size={22}
-                    className="translate-y-1 opacity-0 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100"
-                  />
-                </div>
-                <div>
-                  <p className="font-display text-xl font-semibold">{c}</p>
-                  <p className="text-sm opacity-60">{total} produk</p>
-                </div>
+      <div className="mx-auto max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:space-y-10 lg:py-8">
+        {/* Kategori */}
+        <section aria-label="Kategori" className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-ink/5 sm:p-6">
+          <ul className="grid grid-cols-5 gap-2 sm:gap-4">
+            {categories.map((c) => {
+              const { icon: Icon, tone } = categoryStyle[c];
+              return (
+                <li key={c}>
+                  <Link
+                    to={`/products?kategori=${c}`}
+                    className="group flex flex-col items-center gap-2 text-center"
+                  >
+                    <span
+                      className={`grid h-14 w-14 place-items-center rounded-full transition-transform group-active:scale-95 sm:h-16 sm:w-16 ${tone}`}
+                    >
+                      <Icon size={26} strokeWidth={1.8} />
+                    </span>
+                    <span className="text-xs font-semibold sm:text-sm">{c}</span>
+                  </Link>
+                </li>
+              );
+            })}
+            <li>
+              <Link to="/products" className="group flex flex-col items-center gap-2 text-center">
+                <span className="grid h-14 w-14 place-items-center rounded-full bg-card transition-transform group-active:scale-95 sm:h-16 sm:w-16">
+                  <LayoutGrid size={26} strokeWidth={1.8} />
+                </span>
+                <span className="text-xs font-semibold sm:text-sm">Semua</span>
               </Link>
-            );
-          })}
-        </div>
-      </motion.section>
+            </li>
+          </ul>
+        </section>
 
-      {/* Produk unggulan */}
-      <motion.section {...reveal} className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <div className="flex items-end justify-between gap-4">
-          <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-            Produk unggulan
-          </h2>
-          <Link
-            to="/products"
-            className="text-sm font-semibold text-accent underline-offset-4 hover:underline"
-          >
-            Lihat semua
-          </Link>
-        </div>
-
-        <div className="mt-6 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 lg:grid-cols-4">
-          {featured.map((p) => (
-            <ProductCard key={p.id} product={p} onAdd={onAddToCart} />
+        {/* Kartu promo: geser di HP, tiga kolom di laptop */}
+        <section
+          aria-label="Promo"
+          className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:px-0"
+        >
+          {promoCards.map((c) => (
+            <PromoCard key={c.title} {...c} />
           ))}
-        </div>
-      </motion.section>
+        </section>
 
-      {/* Promo (section gelap sebagai kontras) */}
-      {promo.length > 0 && (
-        <motion.section {...reveal} className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-          <div className="grid gap-8 rounded-3xl bg-ink p-6 text-paper sm:p-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-            <div>
-              <h2 className="font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-                Harga turun minggu ini
-              </h2>
-              <p className="mt-4 max-w-sm text-paper/60">
-                Beberapa HP, laptop, dan aksesori sedang diskon. Stok terbatas, jadi cek sebelum kehabisan.
-              </p>
-              <Link
-                to="/products?promo=1"
-                className="mt-6 inline-block rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition hover:bg-accent-dark active:scale-[0.97]"
-              >
-                Lihat semua promo
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:gap-5">
-              {promo.map((p) => (
-                <div key={p.id} className="rounded-2xl bg-paper p-3 text-ink">
-                  <ProductCard product={p} onAdd={onAddToCart} />
-                </div>
+        {/* Diskon */}
+        {deals.length > 0 && (
+          <section aria-label="Diskon">
+            <SectionHeader title="Diskon untuk Anda" to="/products?promo=1" />
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+              {deals.map((p) => (
+                <ProductCard key={p.id} product={p} onAdd={onAddToCart} />
               ))}
             </div>
+          </section>
+        )}
+
+        {/* Rekomendasi */}
+        <section aria-label="Rekomendasi">
+          <SectionHeader title="Rekomendasi untuk Anda" to="/products" />
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+            {recommended.map((p) => (
+              <ProductCard key={p.id} product={p} onAdd={onAddToCart} />
+            ))}
           </div>
-        </motion.section>
-      )}
+        </section>
+
+        {/* Bar kepercayaan */}
+        <section
+          aria-label="Layanan toko"
+          className="grid grid-cols-2 gap-4 rounded-3xl bg-accent-soft p-5 sm:p-6 lg:grid-cols-4"
+        >
+          {trust.map(({ icon: Icon, title, note }) => (
+            <div key={title} className="flex items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-accent shadow-sm">
+                <Icon size={20} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold leading-tight">{title}</p>
+                <p className="mt-0.5 text-xs text-ink/60">{note}</p>
+              </div>
+            </div>
+          ))}
+        </section>
+      </div>
     </>
   );
 }
